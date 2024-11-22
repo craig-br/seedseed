@@ -28,7 +28,7 @@
   ansible.builtin.find:
     paths: '{{ __tmp_dir.path }}/{{ __selected_experience["url"].split("/")[-1] }}/{{ experiences_path }}/{{ __selected_experience["name"] }}'
     patterns: 'setup.yml,setup.yaml'
-    recurse: false
+    recurse: true
   register: __experience_setup_files
 
 
