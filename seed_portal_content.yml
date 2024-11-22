@@ -29,10 +29,39 @@
       #   label: "{{ __usecase['name'] }}"
       #   loop_var: __usecase
 
-    - name: Load experiences
-      ansible.builtin.include_tasks: load_experience.yml
+    # - name: Load experiences
+    #   ansible.builtin.include_tasks: load_experience.yml
+    #   loop: "{{ __selected_experiences }}"
+    #   loop_control:
+    #     label: "{{ __experience['name'] }}"
+    #     loop_var: __experience
+    #     # loop_var: __experience_loop_var
+    #   register: __experience
+
+    - name: debug loop
+      ansible.builtin.debug:
+        var: __experience_loop_var
       loop: "{{ __selected_experiences }}"
       loop_control:
         label: "{{ __experience_loop_var['name'] }}"
         loop_var: __experience_loop_var
-      register: __experience
+
+    # - name: Load experiences
+    #   ansible.builtin.include_role:
+    #     name: load_experience
+    #   vars:
+    #     __selected_experience: "{{ __experience_loop_var }}"
+    #   loop: "{{ __selected_experiences }}"
+    #   loop_control:
+    #     label: "{{ __experience_loop_var['name'] }}"
+    #     loop_var: __experience_loop_var
+    #     # loop_var: __experience_loop_var
+    #   # register: experience
+    - name: Load experiences
+      ansible.builtin.include_tasks: load_experience.yml
+      vars:
+        __selected_experience: "{{ __experience_loop_var }}"
+      loop: "{{ __selected_experiences }}"
+      loop_control:
+        label: "{{ __experience_loop_var['name'] }}"
+        loop_var: __experience_loop_var

@@ -1,27 +1,52 @@
 ---
-- name: Set experience fact
-  ansible.builtin.set_fact:
-    # experience: "{{ __experience.results }}"
-    experience: "{{ __experience.results | default([]) | map(attribute='__experience_loop_var') | items2dict }}"
 
-- debug:
-    var: experience['url']
+# tasks file for load_experience
+# - debug:
+#     var: __selected_experience
+
+# - name: Set __selected_experience fact
+#   ansible.builtin.set_fact:
+#     # __selected_experience: "{{ __selected_experience.results }}"
+#     experience: "{{ __selected_experience.results | default([]) | map(attribute='experience_loop_var') | items2dict }}"
+#   # loop: "{{ experience.results }}"
+# - debug:
+#     var: experience['url']
+
+# - name: Get Automation Experience repository files
+#   ansible.builtin.git:
+#     repo: "{{ ansible_facts['experience']['url'] }}"
+#     dest: "{{ __tmp_dir.path }}/{{ ansible_facts['experience']['url'].split('/')[-1] }}"
+#     version: "{{ ansible_facts['experience']['version'] | default('main') }}"
+
 - name: Get Automation Experience repository files
   ansible.builtin.git:
-    repo: "{{ ansible_facts['experience']['url'] }}"
-    dest: "{{ __tmp_dir.path }}/{{ ansible_facts['experience']['url'].split('/')[-1] }}"
-    version: "{{ ansible_facts['experience']['version'] | default('main') }}"
+    repo: "{{ __selected_experience['url'] }}"
+    dest: "{{ __tmp_dir.path }}/{{ __selected_experience['url'].split('/')[-1] }}"
+    version: "{{ __selected_experience['version'] | default('main') }}"
 
 - name: Get all setup YAML files
   ansible.builtin.find:
-    paths: '{{ __tmp_dir.path }}/{{ experience["url"].split("/")[-1] }}/{{ experiences_path }}/{{ experience["name"] }}'
+    paths: '{{ __tmp_dir.path }}/{{ __selected_experience["url"].split("/")[-1] }}/{{ experiences_path }}/{{ __selected_experience["name"] }}'
     patterns: 'setup.yml,setup.yaml'
     recurse: true
   register: __experience_setup_files
 
+
+# - name: Set experience.path fact
+#   ansible.builtin.set_fact:
+#     experience: '{{ __experience_setup_file }}'
+#   loop: "{{ __experience_setup_files['files'] }}"
+#   loop_control:
+#     label: "{{ __experience_setup_file['path'] }}"
+#     loop_var: __experience_setup_file
+
 - name: Set experience.path fact
   ansible.builtin.set_fact:
-    experience.path: '{{ __tmp_dir.path }}/{{ experience["url"].split("/")[-1] }}/{{ experiences_path }}/{{ experience["name"] }}'
+    experience: "{{ __experience_setup_file }}"
+  loop: "{{ __experience_setup_files['files'] }}"
+  loop_control:
+    label: "{{ __experience_setup_file['path'] }}"
+    loop_var: __experience_setup_file
 
 - name: Include vars
   ansible.builtin.include_vars:
@@ -30,6 +55,9 @@
   loop_control:
     label: "{{ __experience_setup_file['path'] }}"
     loop_var: __experience_setup_file
+#   register: experience
+# - debug:
+#     var: experience
 
 - name: Execute automation controller resource configuration
   ansible.builtin.include_role:
@@ -37,3 +65,42 @@
   vars:
     controller_configuration_async_delay: 1
     controller_configuration_async_retries: 30
+
+# - debug:
+#     var: __experience
+
+# - name: Set experience fact
+#   ansible.builtin.set_fact:
+#     # experience: "{{ __experience.results }}"
+#     experience: "{{ __experience.results | default([]) | map(attribute='__experience_loop_var') | items2dict }}"
+#   # loop: "{{ __experience.results }}"
+# - debug:
+#     var: experience['url']
+
+# - name: Get Automation Experience repository files
+#   ansible.builtin.git:
+#     repo: "{{ ansible_facts['experience']['url'] }}"
+#     dest: "{{ __tmp_dir.path }}/{{ ansible_facts['experience']['url'].split('/')[-1] }}"
+#     version: "{{ ansible_facts['experience']['version'] | default('main') }}"
+
+# - name: Get all setup YAML files
+#   ansible.builtin.find:
+#     paths: '{{ __tmp_dir.path }}/{{ experience["url"].split("/")[-1] }}/{{ experiences_path }}/{{ experience["name"] }}'
+#     patterns: 'setup.yml,setup.yaml'
+#     recurse: true
+#   register: __experience_setup_files
+
+# - name: Include pattern vars
+#   ansible.builtin.include_vars:
+#     file: "{{ __experience_setup_file['path'] }}"
+#   loop: "{{ __experience_setup_files['files'] }}"
+#   loop_control:
+#     label: "{{ __experience_setup_file['path'] }}"
+#     loop_var: __experience_setup_file
+
+# - name: Execute automation controller resource configuration
+#   ansible.builtin.include_role:
+#     name: infra.controller_configuration.dispatch
+#   vars:
+#     controller_configuration_async_delay: 1
+#     controller_configuration_async_retries: 30
