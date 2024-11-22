@@ -1,6 +1,16 @@
 ---
-- name: Check if the seed_usecase variable is set
+- name: Check if the seed_usecases variable is set
   ansible.builtin.assert:
     that:
-      - seed_usecase is defined and seed_usecase is not none
-    fail_msg: "The seed_usecase variable is not defined. Please set the seed_usecase variable."
+      - usecases is defined and usecases is not none
+    fail_msg: "The usecases variable is not defined. Please set the seed_usecases variable."
+
+- name: Filter valid usecases from the list
+  ansible.builtin.set_fact:
+    selected_usecases: "{{ usecases | selectattr('name', 'in', seed_usecases) | list }}"
+
+- name: Assert that seed_usecases is valid from the use cases list
+  ansible.builtin.assert:
+    that:
+      - selected_usecases is defined and selected_usecases | length > 0
+    fail_msg: "Please specify a valid use case value."

@@ -1,16 +1,17 @@
 ---
 - name: Seeding Red Hat Ansible Portal content
   hosts: localhost
+  connection: local
   gather_facts: false
 
   tasks:
+    - name: Filter valid usecases from the list
+      ansible.builtin.set_fact:
+        __selected_experiences: "{{ usecases | selectattr('name', 'in', seed_usecases) | list }}"
+
     - name: Perform pre-run checks
       ansible.builtin.include_tasks:
         file: ./pre_run_validation.yml
-
-    - name: Filter valid usecases from the list
-      ansible.builtin.set_fact:
-        selected_usecases: "{{ usecases | selectattr('name', 'in', seed_usecase) | list }}"
 
     - name: Create temp dir
       ansible.builtin.tempfile:
@@ -18,27 +19,20 @@
         suffix: build
       register: __tmp_dir
 
-    - name: Load experience content
-      block:
-        - name: Get supported Automation Application
-          ansible.builtin.git:
-            repo: "{{ usecase['url'] }}"
-            dest: '{{ __tmp_dir.path }}/{{ usecase["url"].split("/")[-1] }}'
-            version: "{{ usecase['version'] | default('main') }}"
-          loop: "{{ selected_usecases }}"
-          loop_control:
-            label: "{{ usecase }}"
-            loop_var: usecase
+    # - name: Set __experiences fact
+    #   ansible.builtin.debug:
+    #     var: item
+    #   # ansible.builtin.set_fact:
+    #   #   __experiences: "{{ __usecase }}"
+    #   loop: "{{ __selected_experiences | map('dict') | list }}"
+      # loop_control:
+      #   label: "{{ __usecase['name'] }}"
+      #   loop_var: __usecase
 
-        - name: Get all usecase setup.yml files
-          ansible.builtin.find:
-            paths: "{{ __tmp_dir.path }}"
-            patterns: setup.yml
-            recurse: true
-          register: experiences
-
-        - name: Load experiences
-          ansible.builtin.include_tasks: load_experience.yml
-          loop: '{{ experiences.files }}'
-          loop_control:
-            loop_var: experience
+    - name: Load experiences
+      ansible.builtin.include_tasks: load_experience.yml
+      loop: "{{ __selected_experiences }}"
+      loop_control:
+        label: "{{ __experience_loop_var['name'] }}"
+        loop_var: __experience_loop_var
+      register: __experience
