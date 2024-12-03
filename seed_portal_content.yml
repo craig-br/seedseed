@@ -20,7 +20,7 @@
 
     - name: Load pattern content
       block:
-        - name: Get supported Automation Application
+        - name: Get supported Ansible Patterns
           ansible.builtin.git:
             repo: "{{ usecase['url'] }}"
             dest: '{{ __tmp_dir.path }}/{{ usecase["url"].split("/")[-1] }}'
